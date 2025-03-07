@@ -162,6 +162,11 @@ int kvm_arch_vcpu_create(struct kvm_vcpu *vcpu)
 	/* Setup VCPU AIA */
 	kvm_riscv_vcpu_aia_init(vcpu);
 
+	rc = kvm_riscv_vcpu_smmu_init(vcpu);
+	if (rc) {
+		return rc;
+	}
+
 	/*
 	 * Setup SBI extensions
 	 * NOTE: This must be the last thing to be initialized.
@@ -188,6 +193,8 @@ void kvm_arch_vcpu_postcreate(struct kvm_vcpu *vcpu)
 void kvm_arch_vcpu_destroy(struct kvm_vcpu *vcpu)
 {
 	kvm_riscv_vcpu_sbi_deinit(vcpu);
+
+	kvm_riscv_vcpu_smmu_deinit(vcpu);
 
 	/* Cleanup VCPU AIA context */
 	kvm_riscv_vcpu_aia_deinit(vcpu);
@@ -594,6 +601,7 @@ void kvm_arch_vcpu_load(struct kvm_vcpu *vcpu, int cpu)
 		nacl_csr_write(nsh, CSR_HVIP, csr->hvip);
 		nacl_csr_write(nsh, CSR_VSATP, csr->vsatp);
 		nacl_csr_write(nsh, CSR_HENVCFG, cfg->henvcfg);
+		nacl_csr_write(nsh, CSR_HSSATP, csr->hssatp);
 		if (IS_ENABLED(CONFIG_32BIT))
 			nacl_csr_write(nsh, CSR_HENVCFGH, cfg->henvcfg >> 32);
 		if (riscv_has_extension_unlikely(RISCV_ISA_EXT_SMSTATEEN)) {
@@ -613,6 +621,7 @@ void kvm_arch_vcpu_load(struct kvm_vcpu *vcpu, int cpu)
 		csr_write(CSR_HVIP, csr->hvip);
 		csr_write(CSR_VSATP, csr->vsatp);
 		csr_write(CSR_HENVCFG, cfg->henvcfg);
+		csr_write(CSR_HSSATP, csr->hssatp);
 		if (IS_ENABLED(CONFIG_32BIT))
 			csr_write(CSR_HENVCFGH, cfg->henvcfg >> 32);
 		if (riscv_has_extension_unlikely(RISCV_ISA_EXT_SMSTATEEN)) {
@@ -669,6 +678,7 @@ void kvm_arch_vcpu_put(struct kvm_vcpu *vcpu)
 		csr->vstval = nacl_csr_read(nsh, CSR_VSTVAL);
 		csr->hvip = nacl_csr_read(nsh, CSR_HVIP);
 		csr->vsatp = nacl_csr_read(nsh, CSR_VSATP);
+		csr->hssatp = nacl_csr_read(nsh, CSR_HSSATP);
 	} else {
 		csr->vsstatus = csr_read(CSR_VSSTATUS);
 		csr->vsie = csr_read(CSR_VSIE);
@@ -679,6 +689,7 @@ void kvm_arch_vcpu_put(struct kvm_vcpu *vcpu)
 		csr->vstval = csr_read(CSR_VSTVAL);
 		csr->hvip = csr_read(CSR_HVIP);
 		csr->vsatp = csr_read(CSR_VSATP);
+		csr->hssatp = csr_read(CSR_HSSATP);
 	}
 }
 

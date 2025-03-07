@@ -117,6 +117,7 @@ int kvm_riscv_nacl_init(void)
 	struct page *shmem_page;
 	struct kvm_riscv_nacl *nacl;
 
+	/* XXX: disable nacl to test */
 	if (sbi_spec_version < sbi_mk_version(1, 0) ||
 	    sbi_probe_extension(SBI_EXT_NACL) <= 0)
 		return -ENODEV;

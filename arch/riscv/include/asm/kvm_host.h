@@ -23,6 +23,7 @@
 #include <asm/kvm_vcpu_sbi.h>
 #include <asm/kvm_vcpu_timer.h>
 #include <asm/kvm_vcpu_pmu.h>
+#include <asm/kvm_vcpu_smmu.h>
 
 #define KVM_MAX_VCPUS			1024
 
@@ -159,6 +160,7 @@ struct kvm_vcpu_csr {
 	unsigned long vstval;
 	unsigned long hvip;
 	unsigned long vsatp;
+	unsigned long hssatp;
 	unsigned long scounteren;
 	unsigned long senvcfg;
 };
@@ -249,6 +251,9 @@ struct kvm_vcpu_arch {
 
 	/* AIA VCPU context */
 	struct kvm_vcpu_aia aia_context;
+
+	/* SMMU context */
+	struct kvm_spte_context spte_context;
 
 	/* Cache pages needed to program page tables with spinlock held */
 	struct kvm_mmu_memory_cache mmu_page_cache;

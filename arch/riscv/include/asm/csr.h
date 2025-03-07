@@ -369,6 +369,7 @@
 #define CSR_HVIP		0x645
 #define CSR_HTINST		0x64a
 #define CSR_HGATP		0x680
+#define CSR_HSSATP		0x681
 #define CSR_HGEIP		0xe12
 
 /* Virtual Interrupts and Interrupt Priorities (H-extension with AIA) */
