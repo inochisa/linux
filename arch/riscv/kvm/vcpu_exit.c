@@ -11,6 +11,7 @@
 #include <asm/insn-def.h>
 #include <asm/kvm_mmu.h>
 #include <asm/kvm_nacl.h>
+#include <asm/kvm_vcpu_insn.h>
 
 static int gstage_page_fault(struct kvm_vcpu *vcpu, struct kvm_run *run,
 			     struct kvm_cpu_trap *trap)
@@ -21,6 +22,16 @@ static int gstage_page_fault(struct kvm_vcpu *vcpu, struct kvm_run *run,
 	bool writable;
 	gfn_t gfn;
 	int ret;
+
+	if (((trap->htinst == 0x12000 || trap->htinst == 0x13000) &&
+	     (trap->scause == EXC_INST_GUEST_PAGE_FAULT ||
+	      trap->scause == EXC_LOAD_GUEST_PAGE_FAULT ||
+	      trap->scause == EXC_STORE_GUEST_PAGE_FAULT)) ||
+	    ((trap->htinst == 0x12020 || trap->htinst == 0x13020) &&
+	     trap->scause == EXC_STORE_GUEST_PAGE_FAULT)) {
+
+		return kvm_riscv_handle_smmu_fault(vcpu, run, trap->stval);
+	}
 
 	fault_addr = (trap->htval << 2) | (trap->stval & 0x3);
 	gfn = fault_addr >> PAGE_SHIFT;

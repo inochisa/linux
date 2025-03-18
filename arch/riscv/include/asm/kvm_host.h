@@ -160,7 +160,6 @@ struct kvm_vcpu_csr {
 	unsigned long vstval;
 	unsigned long hvip;
 	unsigned long vsatp;
-	unsigned long hssatp;
 	unsigned long scounteren;
 	unsigned long senvcfg;
 };
@@ -169,6 +168,7 @@ struct kvm_vcpu_config {
 	u64 henvcfg;
 	u64 hstateen0;
 	unsigned long hedeleg;
+	unsigned long hssatp;
 };
 
 struct kvm_vcpu_smstateen_csr {
