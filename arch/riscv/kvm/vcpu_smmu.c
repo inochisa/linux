@@ -142,7 +142,7 @@ int kvm_riscv_handle_smmu_fault(struct kvm_vcpu *vcpu, struct kvm_run *run,
 	int level = 0;
 	struct page *pte_page;
 
-	kvm_info("SMMU check vsatp 0x%016lx with level %d\n", vsatp, maxlevel);
+	kvm_debug("SMMU check vsatp 0x%016lx with level %d\n", vsatp, maxlevel);
 	spte->mmu_level = max(spte->mmu_level, maxlevel);
 
 	while (level < (maxlevel - 1)) {
@@ -150,8 +150,8 @@ int kvm_riscv_handle_smmu_fault(struct kvm_vcpu *vcpu, struct kvm_run *run,
 		pte_t *now = &spgt[idx];
 		phys_addr_t addr = pte_pfn(ptep_get(now));
 
-		kvm_info("now at 0x%016lx %d/%d", (unsigned long)(spgt), level,
-			 maxlevel);
+		kvm_debug("now at 0x%016lx %d/%d", (unsigned long)(spgt), level,
+			  maxlevel);
 
 		if (addr != 0) {
 			spgt = pfn_to_virt(addr);
@@ -174,7 +174,7 @@ int kvm_riscv_handle_smmu_fault(struct kvm_vcpu *vcpu, struct kvm_run *run,
 		level++;
 	}
 
-	kvm_info("handled 0x%016lx with level %d\n", fault_addr, maxlevel);
+	kvm_debug("handled 0x%016lx with level %d\n", fault_addr, maxlevel);
 
 	return 1;
 }
