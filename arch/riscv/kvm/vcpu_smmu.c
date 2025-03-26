@@ -98,6 +98,8 @@ static int kvm_riscv_setup_smmu_context(struct kvm_spte_context* spte)
 
 	kvm_info("SMMU allocate spgd_phys 0x%016llx\n", spte->spgd_phys);
 
+	spte->mmu_level = 0;
+
 	// for (i = 0; i < PTRS_PER_PTE; i++) {
 	// 	struct page *pte_page = alloc_pages(GFP_KERNEL, 1);
 	// 	pte_t *next_spgd = (pte_t *)spte->spgd;
@@ -141,6 +143,7 @@ int kvm_riscv_handle_smmu_fault(struct kvm_vcpu *vcpu, struct kvm_run *run,
 	struct page *pte_page;
 
 	kvm_info("SMMU check vsatp 0x%016lx with level %d\n", vsatp, maxlevel);
+	spte->mmu_level = max(spte->mmu_level, maxlevel);
 
 	while (level < (maxlevel - 1)) {
 		int idx = sstage_pte_index(fault_addr, maxlevel, level);
@@ -163,6 +166,9 @@ int kvm_riscv_handle_smmu_fault(struct kvm_vcpu *vcpu, struct kvm_run *run,
 		spgt = page_to_virt(pte_page);
 
 		memset(spgt, 0x00, SPGD_SIZE);
+
+		if (level + 1 == maxlevel - 1)
+			*(unsigned long*)(spgt + SPGD_FLAG) = SPGD_FLAG_LEAF;
 
 		*now = mk_pte(pte_page,  __pgprot(0));
 		level++;
@@ -196,12 +202,6 @@ void kvm_riscv_vcpu_smmu_put(struct kvm_vcpu *vcpu)
 void kvm_riscv_vcpu_smmu_deinit(struct kvm_vcpu *vcpu)
 {
 	struct kvm_spte_context* spte = &vcpu->arch.spte_context;
-	unsigned long mode = FIELD_GET(VSATP_MODE_MASK, vcpu->arch.guest_csr.vsatp);
 
-	int maxlevel = kvm_riscv_satp_level(mode);
-
-	if (maxlevel < 3)
-		maxlevel = 3;
-
-	kvm_riscv_remove_smmu_context(spte, spte->spgd, 1, maxlevel);
+	kvm_riscv_remove_smmu_context(spte, spte->spgd, 1, spte->mmu_level);
 }

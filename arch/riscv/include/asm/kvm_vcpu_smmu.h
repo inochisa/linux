@@ -8,10 +8,13 @@
 
 #define SEPGD_OFFSET		PAGE_SIZE
 #define SPGD_GPGD_PTR		(SEPGD_OFFSET + 0x000)
+#define SPGD_FLAG		(SEPGD_OFFSET + 0x008)
 #define SPGD_VALID_MAP		(SEPGD_OFFSET + 0x200)
 #define SPGD_GLOBAL_MAP		(SEPGD_OFFSET + 0x400)
 
 #define SPGD_SIZE		(PAGE_SIZE * 2)
+
+#define SPGD_FLAG_LEAF		BIT(0)
 
 #define SPGD_GET(_base, _offset)		\
 	((void *)((unsigned long)(_base) + (_offset)))
@@ -49,6 +52,7 @@ struct kvm_spte_context {
 	unsigned long hssatp;
 	void *spgd;
 	phys_addr_t spgd_phys;
+	int mmu_level;
 };
 
 int kvm_riscv_vcpu_smmu_init(struct kvm_vcpu *vcpu);
