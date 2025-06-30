@@ -203,5 +203,8 @@ void kvm_riscv_vcpu_smmu_deinit(struct kvm_vcpu *vcpu)
 {
 	struct kvm_spte_context* spte = &vcpu->arch.spte_context;
 
+	kvm_info("SMMU free spgd_phys 0x%016llx with level %d\n",
+		 spte->spgd_phys, spte->mmu_level);
+
 	kvm_riscv_remove_smmu_context(spte, spte->spgd, 1, spte->mmu_level);
 }
