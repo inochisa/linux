@@ -26,7 +26,6 @@
 #define sstage_index_bits	10
 #endif
 
-
 static int kvm_riscv_satp_level(unsigned long mode)
 {
 	switch (mode) {
@@ -85,7 +84,6 @@ static void kvm_riscv_remove_smmu_context(struct kvm_spte_context* spte,
 static int kvm_riscv_setup_smmu_context(struct kvm_spte_context* spte)
 {
 	struct page *spte_page;
-	// int ret, i;
 
 	spte_page = alloc_pages(GFP_KERNEL, 1);
 	if (!spte_page)
@@ -99,36 +97,7 @@ static int kvm_riscv_setup_smmu_context(struct kvm_spte_context* spte)
 	kvm_info("SMMU allocate spgd_phys 0x%016llx\n", spte->spgd_phys);
 
 	spte->mmu_level = 0;
-
-	// for (i = 0; i < PTRS_PER_PTE; i++) {
-	// 	struct page *pte_page = alloc_pages(GFP_KERNEL, 1);
-	// 	pte_t *next_spgd = (pte_t *)spte->spgd;
-	// 	pte_t *now = &next_spgd[i];
-
-	// 	if (!pte_page) {
-	// 		ret = -ENOMEM;
-	// 		goto failed;
-	// 	}
-
-	// 	memset(page_to_virt(pte_page), 0x00, SPGD_SIZE);
-
-	// 	*now = mk_pte(pte_page,  __pgprot(0));
-	// }
-
 	return 0;
-
-// failed:
-// 	while (i--) {
-// 		pte_t *next_spgd = (pte_t *)spte->spgd;
-// 		pte_t *now = &next_spgd[i];
-// 		struct page * page = pte_page(*now);
-
-// 		__free_pages(page, 1);
-// 	}
-
-// 	__free_pages(virt_to_page(spte->spgd), 1);
-
-// 	return ret;
 }
 
 int kvm_riscv_handle_smmu_fault(struct kvm_vcpu *vcpu, struct kvm_run *run,
