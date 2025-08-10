@@ -82,14 +82,12 @@ static int kvm_riscv_setup_smmu_context(struct kvm_spte_context* spte)
 {
 	struct page *spte_page;
 
-	spte_page = alloc_pages(GFP_KERNEL, 1);
+	spte_page = alloc_pages(GFP_KERNEL | __GFP_ZERO, 1);
 	if (!spte_page)
 		return -ENOMEM;
 
 	spte->spgd = page_to_virt(spte_page);
 	spte->spgd_phys = page_to_phys(spte_page);
-
-	memset(spte->spgd, 0x00, SPGD_SIZE);
 
 	kvm_info("SMMU allocate spgd_phys 0x%016llx\n", spte->spgd_phys);
 
@@ -125,12 +123,11 @@ int kvm_riscv_handle_smmu_fault(struct kvm_vcpu *vcpu, struct kvm_run *run,
 			continue;
 		}
 
-		pte_page = alloc_pages(GFP_KERNEL, 1);
+		pte_page = alloc_pages(GFP_KERNEL | __GFP_ZERO, 1);
 		if (!pte_page)
 			return -ENOMEM;
 
 		spgt = page_to_virt(pte_page);
-		memset(spgt, 0x00, SPGD_SIZE);
 
 		set_pte(ptep, mk_pte(pte_page,  __pgprot(0)));
 		level++;
