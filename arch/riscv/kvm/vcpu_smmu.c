@@ -52,33 +52,30 @@ static inline unsigned long sstage_pte_index(gpa_t addr, u32 maxlevel, u32 level
 }
 
 static void kvm_riscv_remove_smmu_context(struct kvm_spte_context* spte,
-					  pte_t *next_spgd,
+					  pte_t *spgd,
 					  int level, int maxlevel)
 {
-	struct page *page;
 	int i;
 
 	/* spte is leaf */
 	for (i = 0; i < PTRS_PER_PTE; i++) {
-		pte_t *now = &next_spgd[i];
-		phys_addr_t addr = pte_pfn(ptep_get(now));
+		pte_t *ptep = &spgd[i];
+		unsigned long pfn = pte_pfn(ptep_get(ptep));
 
 		/* spte is not allocate */
-		if (addr == 0)
+		if (pfn == 0)
 			continue;
 
 		if (level < maxlevel - 1) {
-			page = pte_page(*now);
+			void *next_spgd = pfn_to_virt(pfn);
 
-			kvm_riscv_remove_smmu_context(spte, (pte_t *)page_to_virt(page), level + 1, maxlevel);
+			kvm_riscv_remove_smmu_context(spte, (pte_t *)next_spgd, level + 1, maxlevel);
 		}
 
-		set_pte(now, __pte(0));
+		set_pte(ptep, __pte(0));
 	}
 
-	page = virt_to_page(next_spgd);
-
-	__free_pages(page, 1);
+	free_pages((unsigned long)spgd, 1);
 }
 
 static int kvm_riscv_setup_smmu_context(struct kvm_spte_context* spte)
@@ -116,14 +113,14 @@ int kvm_riscv_handle_smmu_fault(struct kvm_vcpu *vcpu, struct kvm_run *run,
 
 	while (level < (maxlevel - 1)) {
 		int idx = sstage_pte_index(fault_addr, maxlevel, level);
-		pte_t *now = &spgt[idx];
-		phys_addr_t addr = pte_pfn(ptep_get(now));
+		pte_t *ptep = &spgt[idx];
+		unsigned long pfn = pte_pfn(ptep_get(ptep));
 
 		kvm_debug("now at 0x%016lx %d/%d", (unsigned long)(spgt), level,
 			  maxlevel);
 
-		if (addr != 0) {
-			spgt = pfn_to_virt(addr);
+		if (pfn != 0) {
+			spgt = pfn_to_virt(pfn);
 			level++;
 			continue;
 		}
@@ -133,13 +130,9 @@ int kvm_riscv_handle_smmu_fault(struct kvm_vcpu *vcpu, struct kvm_run *run,
 			return -ENOMEM;
 
 		spgt = page_to_virt(pte_page);
-
 		memset(spgt, 0x00, SPGD_SIZE);
 
-		if (level + 1 == maxlevel - 1)
-			*(unsigned long*)(spgt + SPGD_FLAG) = SPGD_FLAG_LEAF;
-
-		*now = mk_pte(pte_page,  __pgprot(0));
+		set_pte(ptep, mk_pte(pte_page,  __pgprot(0)));
 		level++;
 	}
 
@@ -175,5 +168,5 @@ void kvm_riscv_vcpu_smmu_deinit(struct kvm_vcpu *vcpu)
 	kvm_info("SMMU free spgd_phys 0x%016llx with level %d\n",
 		 spte->spgd_phys, spte->mmu_level);
 
-	kvm_riscv_remove_smmu_context(spte, spte->spgd, 1, spte->mmu_level);
+	kvm_riscv_remove_smmu_context(spte, spte->spgd, 0, spte->mmu_level);
 }
