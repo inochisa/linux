@@ -58,21 +58,20 @@ static void kvm_riscv_remove_smmu_context(struct kvm_spte_context* spte,
 	int i;
 
 	/* spte is leaf */
-	for (i = 0; i < PTRS_PER_PTE; i++) {
+	for (i = 0; i < PTRS_PER_PTE && level < maxlevel - 1; i++) {
 		pte_t *ptep = &spgd[i];
 		unsigned long pfn = pte_pfn(ptep_get(ptep));
+		void *next_spgd;
 
 		/* spte is not allocate */
 		if (pfn == 0)
 			continue;
 
-		if (level < maxlevel - 1) {
-			void *next_spgd = pfn_to_virt(pfn);
+		next_spgd = pfn_to_virt(pfn);
 
-			kvm_riscv_remove_smmu_context(spte, (pte_t *)next_spgd, level + 1, maxlevel);
+		kvm_info("SMMU enter 0x%016lx at %d of 0x%016lx (level %d)", (unsigned long)next_spgd, i, (unsigned long)spgd, level);
 
-			kvm_info("SMMU free 0x%016lx at %d of 0x%016lx", (unsigned long)next_spgd, i, (unsigned long)spgd);
-		}
+		kvm_riscv_remove_smmu_context(spte, (pte_t *)next_spgd, level + 1, maxlevel);
 
 		set_pte(ptep, __pte(0));
 	}
@@ -113,7 +112,7 @@ int kvm_riscv_handle_smmu_fault(struct kvm_vcpu *vcpu, struct kvm_run *run,
 	spte->mmu_level = max(spte->mmu_level, maxlevel);
 
 	guard(spinlock)(&spte->smmu_lock);
-	while (level < (maxlevel - 1)) {
+	for (level = 0; level < (maxlevel - 1); level++) {
 		int idx = sstage_pte_index(fault_addr, maxlevel, level);
 		pte_t *ptep = &spgt[idx];
 		unsigned long pfn = pte_pfn(ptep_get(ptep));
@@ -123,7 +122,6 @@ int kvm_riscv_handle_smmu_fault(struct kvm_vcpu *vcpu, struct kvm_run *run,
 
 		if (pfn != 0) {
 			spgt = pfn_to_virt(pfn);
-			level++;
 			continue;
 		}
 
@@ -134,7 +132,6 @@ int kvm_riscv_handle_smmu_fault(struct kvm_vcpu *vcpu, struct kvm_run *run,
 		spgt = page_to_virt(pte_page);
 
 		set_pte(ptep, mk_pte(pte_page,  __pgprot(0)));
-		level++;
 	}
 
 	kvm_debug("handled 0x%016lx with level %d\n", fault_addr, maxlevel);
