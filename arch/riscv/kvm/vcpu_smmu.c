@@ -125,7 +125,7 @@ int kvm_riscv_handle_smmu_fault(struct kvm_vcpu *vcpu, struct kvm_run *run,
 			continue;
 		}
 
-		pte_page = alloc_pages(GFP_KERNEL | __GFP_ZERO, 1);
+		pte_page = alloc_pages(GFP_ATOMIC | __GFP_ZERO, 1);
 		if (!pte_page)
 			return -ENOMEM;
 
