@@ -166,7 +166,12 @@ void kvm_riscv_vcpu_smmu_deinit(struct kvm_vcpu *vcpu)
 	kvm_info("SMMU free spgd_phys 0x%016llx with level %d\n",
 		 spte->spgd_phys, spte->mmu_level);
 
-	spin_lock(&spte->smmu_lock);
+	guard(spinlock)(&spte->smmu_lock);
 	kvm_riscv_remove_smmu_context(spte, spte->spgd, 0, spte->mmu_level);
-	spin_unlock(&spte->smmu_lock);
+}
+
+void kvm_riscv_vcpu_smmu_reset(struct kvm_vcpu *vcpu)
+{
+	kvm_riscv_vcpu_smmu_deinit(vcpu);
+	kvm_riscv_vcpu_smmu_init(vcpu);
 }

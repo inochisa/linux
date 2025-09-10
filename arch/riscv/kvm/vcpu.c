@@ -112,6 +112,8 @@ static void kvm_riscv_reset_vcpu(struct kvm_vcpu *vcpu, bool kvm_sbi_reset)
 	vcpu->arch.hfence_tail = 0;
 	memset(vcpu->arch.hfence_queue, 0, sizeof(vcpu->arch.hfence_queue));
 
+	kvm_riscv_vcpu_smmu_reset(vcpu);
+
 	kvm_riscv_vcpu_sbi_reset(vcpu);
 
 	/* Reset the guest CSRs for hotplug usecase */
@@ -193,8 +195,6 @@ void kvm_arch_vcpu_postcreate(struct kvm_vcpu *vcpu)
 void kvm_arch_vcpu_destroy(struct kvm_vcpu *vcpu)
 {
 	kvm_riscv_vcpu_sbi_deinit(vcpu);
-
-	kvm_riscv_vcpu_smmu_deinit(vcpu);
 
 	/* Cleanup VCPU AIA context */
 	kvm_riscv_vcpu_aia_deinit(vcpu);
