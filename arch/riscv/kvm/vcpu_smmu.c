@@ -148,7 +148,7 @@ int kvm_riscv_vcpu_smmu_init(struct kvm_vcpu *vcpu)
 	if (ret < 0)
 		return ret;
 
-	hssatp = FIELD_PREP(SATP_PPN, (vcpu->arch.spte_context.spgd_phys >> PAGE_SHIFT));
+	hssatp = FIELD_PREP(SATP_PPN, PFN_DOWN(vcpu->arch.spte_context.spgd_phys));
 
 	kvm_info("SMMU hssatp value 0x%016lx\n", hssatp);
 
@@ -159,7 +159,7 @@ void kvm_riscv_vcpu_smmu_put(struct kvm_vcpu *vcpu)
 {
 	struct kvm_spte_context* spte = &vcpu->arch.spte_context;
 
-	unsigned long hssatp = FIELD_PREP(SATP_PPN, (spte->spgd_phys >> PAGE_SHIFT));
+	unsigned long hssatp = FIELD_PREP(SATP_PPN, PFN_DOWN(spte->spgd_phys));
 
 	csr_write(CSR_HSSATP, hssatp);
 }
