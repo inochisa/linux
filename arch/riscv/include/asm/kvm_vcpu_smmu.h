@@ -61,6 +61,6 @@ void kvm_riscv_vcpu_smmu_put(struct kvm_vcpu *vcpu);
 int kvm_riscv_handle_smmu_fault(struct kvm_vcpu *vcpu, struct kvm_run *run,
 				unsigned long fault_addr);
 void kvm_riscv_vcpu_smmu_reset(struct kvm_vcpu *vcpu);
-
+void kvm_riscv_vcpu_smmu_show_pte(struct kvm_vcpu *vcpu, unsigned long addr);
 
 #endif

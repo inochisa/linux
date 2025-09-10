@@ -50,8 +50,10 @@ static int gstage_page_fault(struct kvm_vcpu *vcpu, struct kvm_run *run,
 	ret = kvm_riscv_mmu_map(vcpu, memslot, fault_addr, hva,
 				(trap->scause == EXC_STORE_GUEST_PAGE_FAULT) ? true : false,
 				&host_map);
-	if (ret < 0)
+	if (ret < 0) {
+		kvm_riscv_vcpu_smmu_show_pte(vcpu, trap->stval);
 		return ret;
+	}
 
 	return 1;
 }
