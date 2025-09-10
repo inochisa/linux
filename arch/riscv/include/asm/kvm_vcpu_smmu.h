@@ -50,7 +50,6 @@ static const unsigned long kvm_spte_size = sizeof(struct kvm_spte);
 
 struct kvm_spte_context {
 	spinlock_t smmu_lock;
-	unsigned long hssatp;
 	void *spgd;
 	phys_addr_t spgd_phys;
 	int mmu_level;

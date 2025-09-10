@@ -141,22 +141,27 @@ int kvm_riscv_handle_smmu_fault(struct kvm_vcpu *vcpu, struct kvm_run *run,
 
 int kvm_riscv_vcpu_smmu_init(struct kvm_vcpu *vcpu)
 {
+	unsigned long hssatp;
 	int ret;
 
 	ret = kvm_riscv_setup_smmu_context(&vcpu->arch.spte_context);
 	if (ret < 0)
 		return ret;
 
-	vcpu->arch.cfg.hssatp = FIELD_PREP(SATP_PPN, (vcpu->arch.spte_context.spgd_phys >> PAGE_SHIFT));
+	hssatp = FIELD_PREP(SATP_PPN, (vcpu->arch.spte_context.spgd_phys >> PAGE_SHIFT));
 
-	kvm_info("SMMU hssatp value 0x%016lx\n", vcpu->arch.cfg.hssatp);
+	kvm_info("SMMU hssatp value 0x%016lx\n", hssatp);
 
 	return 0;
 }
 
 void kvm_riscv_vcpu_smmu_put(struct kvm_vcpu *vcpu)
 {
-	csr_write(CSR_HSSATP, 0);
+	struct kvm_spte_context* spte = &vcpu->arch.spte_context;
+
+	unsigned long hssatp = FIELD_PREP(SATP_PPN, (spte->spgd_phys >> PAGE_SHIFT));
+
+	csr_write(CSR_HSSATP, hssatp);
 }
 
 void kvm_riscv_vcpu_smmu_deinit(struct kvm_vcpu *vcpu)
