@@ -121,6 +121,7 @@
 #define EXC_LOAD_GUEST_PAGE_FAULT	21
 #define EXC_VIRTUAL_INST_FAULT		22
 #define EXC_STORE_GUEST_PAGE_FAULT	23
+#define EXC_DIRTY_LOG_BUFFER_FAULT	24
 
 /* PMP configuration */
 #define PMP_R			0x01
@@ -383,6 +384,8 @@
 #define CSR_HVIP		0x645
 #define CSR_HTINST		0x64a
 #define CSR_HGATP		0x680
+#define CSR_HGDTCTL		0x681
+#define CSR_HGDTS		0x682
 #define CSR_HGEIP		0xe12
 
 /* Virtual Interrupts and Interrupt Priorities (H-extension with AIA) */
@@ -483,6 +486,25 @@
 #define SEED_OPST_ES16		_AC(0x80000000, UL)
 #define SEED_OPST_DEAD		_AC(0xC0000000, UL)
 #define SEED_ENTROPY_MASK	_AC(0xFFFF, UL)
+
+/* HGPMTQ bits */
+#define HGDTCTL_EN              BIT(0)
+#define HGDTCTL_SIZE            GENMASK(4, 1)
+#define HGDTCTL32_PPN           GENMASK(31, 10)
+#define HGDTCTL64_PPN           GENMASK_ULL(53, 10)
+
+#define HGDTS_INDEX             GENMASK(18, 0)
+#define HGDTS32_FULL            BIT(31)
+#define HGDTS64_FULL            BIT(63)
+
+#ifdef CONFIG_64BIT
+#define HGDTCTL_PPN		HGDTCTL64_PPN
+#define HGDTS_FULL		HGDTS64_FULL
+#else
+#define HGDTCTL_PPN		HGDTCTL32_PPN
+#define HGDTS_FULL		HGDTS32_FULL
+#endif
+
 
 #ifdef CONFIG_RISCV_M_MODE
 # define CSR_STATUS	CSR_MSTATUS
