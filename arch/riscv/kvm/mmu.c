@@ -22,12 +22,19 @@ static void mmu_wp_memory_region(struct kvm *kvm, int slot)
 	struct kvm_memory_slot *memslot = id_to_memslot(slots, slot);
 	phys_addr_t start = memslot->base_gfn << PAGE_SHIFT;
 	phys_addr_t end = (memslot->base_gfn + memslot->npages) << PAGE_SHIFT;
+	enum kvm_riscv_gstage_op op;
 	struct kvm_gstage gstage;
 
 	kvm_riscv_gstage_init(&gstage, kvm);
 
+	if (riscv_isa_extension_available(NULL, SVADU))
+		op = GSTAGE_OP_CLEAD_DIRTY;
+	else
+		op = GSTAGE_OP_WP;
+
 	spin_lock(&kvm->mmu_lock);
-	kvm_riscv_gstage_wp_range(&gstage, start, end);
+	// kvm_riscv_gstage_op_range(&gstage, start, end, GSTAGE_OP_WP);
+	kvm_riscv_gstage_op_range(&gstage, start, end, op);
 	spin_unlock(&kvm->mmu_lock);
 	kvm_flush_remote_tlbs_memslot(kvm, memslot);
 }
@@ -98,11 +105,18 @@ void kvm_arch_mmu_enable_log_dirty_pt_masked(struct kvm *kvm,
 	phys_addr_t base_gfn = slot->base_gfn + gfn_offset;
 	phys_addr_t start = (base_gfn +  __ffs(mask)) << PAGE_SHIFT;
 	phys_addr_t end = (base_gfn + __fls(mask) + 1) << PAGE_SHIFT;
+	enum kvm_riscv_gstage_op op;
 	struct kvm_gstage gstage;
 
 	kvm_riscv_gstage_init(&gstage, kvm);
 
-	kvm_riscv_gstage_wp_range(&gstage, start, end);
+	if (riscv_isa_extension_available(NULL, SVADU))
+		op = GSTAGE_OP_CLEAD_DIRTY;
+	else
+		op = GSTAGE_OP_WP;
+
+	// kvm_riscv_gstage_op_range(&gstage, start, end, GSTAGE_OP_WP);
+	kvm_riscv_gstage_op_range(&gstage, start, end, op);
 }
 
 void kvm_arch_sync_dirty_log(struct kvm *kvm, struct kvm_memory_slot *memslot)

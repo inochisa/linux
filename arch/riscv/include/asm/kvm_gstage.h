@@ -68,6 +68,7 @@ enum kvm_riscv_gstage_op {
 	GSTAGE_OP_NOP = 0,	/* Nothing */
 	GSTAGE_OP_CLEAR,	/* Clear/Unmap */
 	GSTAGE_OP_WP,		/* Write-protect */
+	GSTAGE_OP_CLEAD_DIRTY,	/* Clear D bit */
 };
 
 void kvm_riscv_gstage_op_pte(struct kvm_gstage *gstage, gpa_t addr,
@@ -76,7 +77,8 @@ void kvm_riscv_gstage_op_pte(struct kvm_gstage *gstage, gpa_t addr,
 void kvm_riscv_gstage_unmap_range(struct kvm_gstage *gstage,
 				  gpa_t start, gpa_t size, bool may_block);
 
-void kvm_riscv_gstage_wp_range(struct kvm_gstage *gstage, gpa_t start, gpa_t end);
+void kvm_riscv_gstage_op_range(struct kvm_gstage *gstage, gpa_t start, gpa_t end,
+			       enum kvm_riscv_gstage_op op);
 
 void kvm_riscv_gstage_mode_detect(void);
 
