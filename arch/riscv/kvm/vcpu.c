@@ -158,6 +158,10 @@ int kvm_arch_vcpu_create(struct kvm_vcpu *vcpu)
 	if (rc)
 		return rc;
 
+	rc = kvm_riscv_vcpu_alloc_dirty_buffer(vcpu, vcpu->kvm->dirty_ring_size);
+	if (rc)
+		goto failed;
+
 	/* Setup VCPU timer */
 	kvm_riscv_vcpu_timer_init(vcpu);
 
@@ -177,6 +181,10 @@ int kvm_arch_vcpu_create(struct kvm_vcpu *vcpu)
 	kvm_riscv_reset_vcpu(vcpu, false);
 
 	return 0;
+
+failed:
+	kvm_riscv_vcpu_free_vector_context(vcpu);
+	return rc;
 }
 
 void kvm_arch_vcpu_postcreate(struct kvm_vcpu *vcpu)
@@ -204,6 +212,9 @@ void kvm_arch_vcpu_destroy(struct kvm_vcpu *vcpu)
 
 	/* Free unused pages pre-allocated for G-stage page table mappings */
 	kvm_mmu_free_memory_cache(&vcpu->arch.mmu_page_cache);
+
+	/* Free dirty log buffer context */
+	kvm_riscv_vcpu_dirty_log_deinit(vcpu);
 
 	/* Free vector context space for host and guest kernel */
 	kvm_riscv_vcpu_free_vector_context(vcpu);
@@ -606,6 +617,8 @@ csr_restore_done:
 	kvm_riscv_vcpu_guest_vector_restore(&vcpu->arch.guest_context,
 					    vcpu->arch.isa);
 
+	kvm_riscv_vcpu_dirty_log_load(vcpu);
+
 	kvm_make_request(KVM_REQ_STEAL_UPDATE, vcpu);
 
 	vcpu->cpu = cpu;
@@ -619,6 +632,8 @@ void kvm_arch_vcpu_put(struct kvm_vcpu *vcpu)
 	vcpu->cpu = -1;
 
 	kvm_riscv_vcpu_aia_put(vcpu);
+
+	kvm_riscv_vcpu_dirty_log_put(vcpu);
 
 	kvm_riscv_vcpu_guest_fp_save(&vcpu->arch.guest_context,
 				     vcpu->arch.isa);

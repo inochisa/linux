@@ -25,6 +25,7 @@
 #include <asm/kvm_vcpu_sbi_fwft.h>
 #include <asm/kvm_vcpu_timer.h>
 #include <asm/kvm_vcpu_pmu.h>
+#include <asm/kvm_vcpu_dirty_log.h>
 
 #define KVM_MAX_VCPUS			1024
 
@@ -265,6 +266,9 @@ struct kvm_vcpu_arch {
 		gpa_t shmem;
 		u64 last_steal;
 	} sta;
+
+	/* Dirty log buffer */
+	struct kvm_vcpu_dirty_log dirty_log;
 };
 
 /*

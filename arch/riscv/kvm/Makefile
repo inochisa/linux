@@ -23,6 +23,7 @@ kvm-y += tlb.o
 kvm-y += vcpu.o
 kvm-y += vcpu_config.o
 kvm-y += vcpu_exit.o
+kvm-y += vcpu_dirty_log.o
 kvm-y += vcpu_fp.o
 kvm-y += vcpu_insn.o
 kvm-y += vcpu_onereg.o
