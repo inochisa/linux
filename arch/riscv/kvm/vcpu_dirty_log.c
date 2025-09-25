@@ -13,6 +13,9 @@ void kvm_riscv_vcpu_dirty_log_deinit(struct kvm_vcpu *vcpu)
 {
 	struct kvm_vcpu_dirty_log *dirty_log = &vcpu->arch.dirty_log;
 
+	kvm_info("free dirty log buffer with 0x%016llx/%d\n",
+		dirty_log->buffer_phys, dirty_log->order);
+
 	if (dirty_log->order < 0)
 		return;
 
@@ -48,6 +51,18 @@ int kvm_riscv_vcpu_alloc_dirty_buffer(struct kvm_vcpu *vcpu, int size)
 	dirty_log->buffer = page_to_virt(dirty_buffer);
 	dirty_log->buffer_phys = page_to_phys(dirty_buffer);
 	dirty_log->order = order;
+
+	{
+		unsigned long ctrl;
+
+		ctrl = FIELD_PREP(HGDTCTL_PPN, dirty_log->buffer_phys >> PAGE_SHIFT) |
+			FIELD_PREP(HGDTCTL_SIZE, dirty_log->order) |
+			HGDTCTL_EN;
+
+		kvm_info("Allow dirty log buffer with 0x%016llx/%d (0x%016lx)\n",
+			dirty_log->buffer_phys, dirty_log->order, ctrl);
+
+	}
 
 	return 0;
 }
