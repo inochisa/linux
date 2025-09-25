@@ -193,6 +193,9 @@ int kvm_riscv_vcpu_exit(struct kvm_vcpu *vcpu, struct kvm_run *run,
 	if (trap->scause & CAUSE_IRQ_FLAG)
 		return 1;
 
+	/* flush dirty log befor any exception */
+	kvm_riscv_vcpu_flush_dirty_buffer(vcpu);
+
 	/* Handle guest traps */
 	ret = -EFAULT;
 	run->exit_reason = KVM_EXIT_UNKNOWN;
@@ -242,6 +245,10 @@ int kvm_riscv_vcpu_exit(struct kvm_vcpu *vcpu, struct kvm_run *run,
 	case EXC_BREAKPOINT:
 		run->exit_reason = KVM_EXIT_DEBUG;
 		ret = 0;
+		break;
+	/* This is already handled before, so just return */
+	case EXC_DIRTY_LOG_BUFFER_FAULT:
+		ret = 1;
 		break;
 	default:
 		break;
