@@ -632,6 +632,7 @@ void kvm_arch_vcpu_load(struct kvm_vcpu *vcpu, int cpu)
 	}
 
 	kvm_riscv_mmu_update_hgatp(vcpu);
+	kvm_riscv_vcpu_smmu_load(vcpu);
 
 	kvm_riscv_vcpu_timer_restore(vcpu);
 

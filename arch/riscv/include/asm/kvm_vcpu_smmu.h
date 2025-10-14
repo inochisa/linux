@@ -57,6 +57,7 @@ struct kvm_spte_context {
 
 int kvm_riscv_vcpu_smmu_init(struct kvm_vcpu *vcpu);
 void kvm_riscv_vcpu_smmu_deinit(struct kvm_vcpu *vcpu);
+void kvm_riscv_vcpu_smmu_load(struct kvm_vcpu *vcpu);
 void kvm_riscv_vcpu_smmu_put(struct kvm_vcpu *vcpu);
 int kvm_riscv_handle_smmu_fault(struct kvm_vcpu *vcpu, struct kvm_run *run,
 				unsigned long fault_addr);

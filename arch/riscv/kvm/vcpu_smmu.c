@@ -155,13 +155,18 @@ int kvm_riscv_vcpu_smmu_init(struct kvm_vcpu *vcpu)
 	return 0;
 }
 
-void kvm_riscv_vcpu_smmu_put(struct kvm_vcpu *vcpu)
+void kvm_riscv_vcpu_smmu_load(struct kvm_vcpu *vcpu)
 {
 	struct kvm_spte_context* spte = &vcpu->arch.spte_context;
 
 	unsigned long hssatp = FIELD_PREP(SATP_PPN, PFN_DOWN(spte->spgd_phys));
 
 	csr_write(CSR_HSSATP, hssatp);
+}
+
+void kvm_riscv_vcpu_smmu_put(struct kvm_vcpu *vcpu)
+{
+	csr_write(CSR_HSSATP, 0);
 }
 
 void kvm_riscv_vcpu_smmu_deinit(struct kvm_vcpu *vcpu)
