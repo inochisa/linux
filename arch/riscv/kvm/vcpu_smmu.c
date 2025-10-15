@@ -117,8 +117,8 @@ int kvm_riscv_handle_smmu_fault(struct kvm_vcpu *vcpu, struct kvm_run *run,
 		pte_t *ptep = &spgt[idx];
 		unsigned long pfn = pte_pfn(ptep_get(ptep));
 
-		kvm_debug("now at 0x%016lx %d/%d", (unsigned long)(spgt), level,
-			  maxlevel);
+		kvm_debug("0x%016lx %d/%d: 0x%016lx", (unsigned long)(spgt), level,
+			  maxlevel, pte_val(ptep_get(ptep)));
 
 		if (pfn != 0) {
 			spgt = pfn_to_virt(pfn);
