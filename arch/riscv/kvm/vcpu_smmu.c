@@ -42,7 +42,7 @@ static int kvm_riscv_satp_level(unsigned long mode)
 	return -1;
 }
 
-static inline unsigned long sstage_pte_index(gpa_t addr, u32 maxlevel, u32 level)
+static inline unsigned long sstage_pte_index(gva_t addr, u32 maxlevel, u32 level)
 {
 	u32 now_level = maxlevel - level - 1;
 	unsigned long shift = PAGE_SHIFT + (sstage_index_bits * now_level);
