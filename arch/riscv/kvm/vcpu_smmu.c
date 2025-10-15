@@ -188,10 +188,10 @@ void kvm_riscv_vcpu_smmu_reset(struct kvm_vcpu *vcpu)
 
 static bool kvm_riscv_vcpu_smmu_check_valid(void *spgt, unsigned int idx)
 {
-	unsigned int offset = SPGD_VALID_MAP + (idx / 64) * 64;
-	unsigned long volatile* ptr = (void *)((unsigned long)(spgt) + offset);
+	unsigned int offset = SPGD_VALID_MAP + (idx & 63) / 8;
+	unsigned long volatile *ptr = (void *)((unsigned long)(spgt) + offset);
 
-	return *ptr & BIT(idx % 64);
+	return READ_ONCE(*ptr) & BIT(idx % 64);
 }
 
 void kvm_riscv_vcpu_smmu_show_pte(struct kvm_vcpu *vcpu, unsigned long addr)
@@ -219,10 +219,11 @@ void kvm_riscv_vcpu_smmu_show_pte(struct kvm_vcpu *vcpu, unsigned long addr)
 		if (pte_val(*ptep) & _PAGE_PRESENT) {
 			unsigned int offset = SPGD_GPGD_PTR;
 			unsigned long volatile* ptr = (void *)((unsigned long)(spgt) + offset);
-			unsigned long gptr = *ptr;
+			unsigned long gptr = READ_ONCE(*ptr);
 
 			kvm_err("SMMU: Find huge page table at level %d, pos %d, addr 0x%lx\n",
 				level, idx, gptr);
+			return;
 		}
 
 		kvm_err("SMMU: valid page table at level %d, pos %d, addr 0x%llx\n",

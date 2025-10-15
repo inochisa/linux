@@ -51,7 +51,6 @@ static int gstage_page_fault(struct kvm_vcpu *vcpu, struct kvm_run *run,
 				(trap->scause == EXC_STORE_GUEST_PAGE_FAULT) ? true : false,
 				&host_map);
 	if (ret < 0) {
-		kvm_riscv_vcpu_smmu_show_pte(vcpu, trap->stval);
 		return ret;
 	}
 
@@ -240,6 +239,8 @@ int kvm_riscv_vcpu_exit(struct kvm_vcpu *vcpu, struct kvm_run *run,
 	case EXC_STORE_GUEST_PAGE_FAULT:
 		if (vcpu->arch.guest_context.hstatus & HSTATUS_SPV)
 			ret = gstage_page_fault(vcpu, run, trap);
+		if (ret < 0)
+			kvm_riscv_vcpu_smmu_show_pte(vcpu, trap->stval);
 		break;
 	case EXC_SUPERVISOR_SYSCALL:
 		if (vcpu->arch.guest_context.hstatus & HSTATUS_SPV)
