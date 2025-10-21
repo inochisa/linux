@@ -188,10 +188,10 @@ void kvm_riscv_vcpu_smmu_reset(struct kvm_vcpu *vcpu)
 
 static bool kvm_riscv_vcpu_smmu_check_valid(void *spgt, unsigned int idx)
 {
-	unsigned int offset = SPGD_VALID_MAP + (idx & 63) / 8;
-	unsigned long volatile *ptr = (void *)((unsigned long)(spgt) + offset);
+	unsigned int offset = SPGD_VALID_MAP + (idx & 0x3f) / 8;
+	unsigned long *ptr = phys_to_virt(virt_to_phys(spgt) + offset);
 
-	return READ_ONCE(*ptr) & BIT(idx % 64);
+	return (*ptr) & BIT(idx & 0x3f);
 }
 
 void kvm_riscv_vcpu_smmu_show_pte(struct kvm_vcpu *vcpu, unsigned long addr)
@@ -204,7 +204,7 @@ void kvm_riscv_vcpu_smmu_show_pte(struct kvm_vcpu *vcpu, unsigned long addr)
 	if (spte->mmu_level == 0)
 		return;
 
-	kvm_err("Currect shadow page table %lx\n", (unsigned long)spte->spgd_phys);
+	kvm_err("Currect shadow page table 0x%016lx\n", (unsigned long)spte->spgd_phys);
 
 	for (level = 0; level < (maxlevel - 1); ++level) {
 		int idx = sstage_pte_index(addr, maxlevel, level);
@@ -218,14 +218,14 @@ void kvm_riscv_vcpu_smmu_show_pte(struct kvm_vcpu *vcpu, unsigned long addr)
 
 		if (pte_val(*ptep) & _PAGE_PRESENT) {
 			unsigned long *ptr = pfn_to_virt(virt_to_pfn(spgt) + 1);
-			unsigned long gptr = READ_ONCE(*ptr);
+			unsigned long gptr = *ptr;
 
 			kvm_err("SMMU: Find huge page table at level %d, pos %d, addr 0x%lx\n",
 				level, idx, gptr);
 			return;
 		}
 
-		kvm_err("SMMU: valid page table at level %d, pos %d, addr 0x%llx\n",
+		kvm_err("SMMU: valid page table at level %d, pos %d, addr 0x%016llx\n",
 			level, idx, pfn_to_phys(pfn));
 
 		spgt = pfn_to_virt(pfn);
