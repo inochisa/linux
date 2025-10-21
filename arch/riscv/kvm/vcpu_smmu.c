@@ -217,8 +217,7 @@ void kvm_riscv_vcpu_smmu_show_pte(struct kvm_vcpu *vcpu, unsigned long addr)
 		}
 
 		if (pte_val(*ptep) & _PAGE_PRESENT) {
-			unsigned int offset = SPGD_GPGD_PTR;
-			unsigned long volatile* ptr = (void *)((unsigned long)(spgt) + offset);
+			unsigned long *ptr = pfn_to_virt(virt_to_pfn(spgt) + 1);
 			unsigned long gptr = READ_ONCE(*ptr);
 
 			kvm_err("SMMU: Find huge page table at level %d, pos %d, addr 0x%lx\n",
