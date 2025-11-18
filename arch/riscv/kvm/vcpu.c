@@ -667,7 +667,6 @@ void kvm_arch_vcpu_put(struct kvm_vcpu *vcpu)
 	kvm_riscv_vcpu_guest_vector_save(&vcpu->arch.guest_context,
 					 vcpu->arch.isa);
 	kvm_riscv_vcpu_host_vector_restore(&vcpu->arch.host_context);
-	kvm_riscv_vcpu_smmu_put(vcpu);
 
 	if (kvm_riscv_nacl_available()) {
 		nsh = nacl_shmem();
